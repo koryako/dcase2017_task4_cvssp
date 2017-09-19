@@ -2,7 +2,7 @@
 
 # author: Qiuqiang Kong and Yong XU (contributed equally), Wenwu Wang and Mark D. Plumbley
 
-Source code for our 1st prize system to win the DCASE2017 task4 "Large-scale weakly supervised sound event detection for smart cars" challenge
+Source code for our 1st prize system to win the DCASE2017 task4 "Large-scale weakly supervised sound event detection for smart cars" challenge. 
 
 The detailed results can be found here: 
 http://www.cs.tut.fi/sgn/arg/dcase2017/challenge/task-large-scale-sound-event-detection-results
