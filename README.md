@@ -1,4 +1,5 @@
-# dcase2017_task4_cvssp
+# dcase2017_task4_cvssp, 1st prize system in DCASE2017 task 4 challenge
+
 # author: Qiuqiang Kong and Yong XU (contributed equally), Wenwu Wang and Mark D. Plumbley
 
 Source code for our 1st prize system to win the DCASE2017 task4 "Large-scale weakly supervised sound event detection for smart cars" challenge
