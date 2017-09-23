@@ -24,3 +24,4 @@ idx_to_id = {index: id for index, id in enumerate(ids)}
 id_to_idx = {id: index for index, id in enumerate(ids)}
 idx_to_lb = {index: lb for index, lb in enumerate(lbs)}
 lb_to_idx = {lb: index for index, lb in enumerate(lbs)}
+num_classes = len(lbs)
