@@ -34,11 +34,6 @@ def read_audio(path, target_fs=None):
 def write_audio(path, audio, sample_rate):
     soundfile.write(file=path, data=audio, samplerate=sample_rate)
 
-# def get_filename(path):
-#     na_ext = path.split('/')[-1]
-#     na = os.path.splitext(na_ext)[0]
-#     return na
-
 # Create an empty folder
 def create_folder(fd):
     if not os.path.exists(fd):
@@ -121,7 +116,8 @@ def pack_features_to_hdf5(fe_dir, csv_path, out_path):
        
     Args: 
       fe_dir: string, directory of features. 
-      csv_path: string, path of csv file. E.g. "testing_set.csv"
+      csv_path: string | "", path of csv file. E.g. "testing_set.csv". If the 
+          string is empty, then pack features with all labels False. 
       out_path: string, path to write out the created hdf5 file. 
       
     Returns:
@@ -130,32 +126,44 @@ def pack_features_to_hdf5(fe_dir, csv_path, out_path):
     max_len = cfg.max_len
     create_folder(os.path.dirname(out_path))
     
-    with open(csv_path, 'rb') as f:
-        reader = csv.reader(f)
-        lis = list(reader)
-        
     t1 = time.time()
     x_all, y_all, na_all = [], [], []
-    cnt = 0
-    for li in lis:
-        [na, bgn, fin, lbs, ids] = li
-        if cnt % 100 == 0: print(cnt)
-        na = os.path.splitext(na)[0]
-        fe_na = 'Y' + na + '_' + bgn + '_' + fin + '.p' # Correspond to the wav name. 
-        fe_path = os.path.join(fe_dir, fe_na)
-        
-        
-        if not os.path.isfile(fe_path):
-            print("File %s is in the csv file but the feature is not extracted!" % fe_path)
-        else:
-            na_all.append(na + '_' + bgn + '_' + fin)
+    
+    if csv_path != "":    # Pack from csv file (training & testing from dev. data)
+        with open(csv_path, 'rb') as f:
+            reader = csv.reader(f)
+            lis = list(reader)
+        cnt = 0
+        for li in lis:
+            [na, bgn, fin, lbs, ids] = li
+            if cnt % 100 == 0: print(cnt)
+            na = os.path.splitext(na)[0]
+            bare_na = 'Y' + na + '_' + bgn + '_' + fin # Correspond to the wav name. 
+            fe_na = bare_na + ".p"
+            fe_path = os.path.join(fe_dir, fe_na)
+            
+            if not os.path.isfile(fe_path):
+                print("File %s is in the csv file but the feature is not extracted!" % fe_path)
+            else:
+                na_all.append(bare_na + ".wav")
+                x = cPickle.load(open(fe_path, 'rb'))
+                x = pad_trunc_seq(x, max_len)
+                x_all.append(x)
+                ids = ids.split(',')
+                y = ids_to_multinomial(ids)
+                y_all.append(y)
+            cnt += 1
+    else:   # Pack from features without ground truth label (dev. data)
+        names = os.listdir(fe_dir)
+        names = sorted(names)
+        for fe_na in names:
+            bare_na = os.path.splitext(fe_na)[0]
+            fe_path = os.path.join(fe_dir, fe_na)
+            na_all.append(bare_na + ".wav")
             x = cPickle.load(open(fe_path, 'rb'))
             x = pad_trunc_seq(x, max_len)
             x_all.append(x)
-            ids = ids.split(',')
-            y = ids_to_multinomial(ids)
-            y_all.append(y)
-        cnt += 1
+            y_all.append(None)
         
     x_all = np.array(x_all, dtype=np.float32)
     y_all = np.array(y_all, dtype=np.bool)
@@ -205,15 +213,85 @@ def pad_trunc_seq(x, max_len):
     else:
         x_new = x[0:max_len]
     return x_new
+    
+### Load data & scale data
+def load_hdf5_data(hdf5_path, verbose=1):
+    """Load hdf5 data. 
+    
+    Args:
+      hdf5_path: string, path of hdf5 file. 
+      verbose: integar, print flag. 
+      
+    Returns:
+      x: ndarray (np.float32), shape: (n_clips, n_time, n_freq)
+      y: ndarray (np.bool), shape: (n_clips, n_classes)
+      na_list: list, containing wav names. 
+    """
+    t1 = time.time()
+    with h5py.File(hdf5_path, 'r') as hf:
+        x = np.array(hf.get('x'))
+        y = np.array(hf.get('y'))
+        na_list = list(hf.get('na_list'))
+        
+    if verbose == 1:
+        print("--- %s ---" % hdf5_path)
+        print("x.shape: %s %s" % (x.shape, x.dtype))
+        print("y.shape: %s %s" % (y.shape, y.dtype))
+        print("len(na_list): %d" % len(na_list))
+        print("Loading time: %s" % (time.time() - t1,))
+        
+    return x, y, na_list
 
+def calculate_scaler(x3d, verbose=1):
+    """Calculate scaler of input data on each frequency bin. 
+    
+    Args:
+      x3d: ndarray, input sequence data, shape: (n_clips, n_time, n_freq)
+      verbose: integar, print flag. 
+      
+    Returns:
+      Scaler object. 
+    """
+    t1 = time.time()
+    (n_clips, n_time, n_freq) = x3d.shape
+    x2d = x3d.reshape((n_clips * n_time, n_freq))
+    scaler = preprocessing.StandardScaler().fit(x2d)
+    if verbose >= 1:
+        print("Calculating scaler time: %s" % (time.time() - t1,))
+    if verbose == 2:
+        print("Mean:", scaler.mean_)
+        print(scaler.scale_)
+    return scaler
+    
+def do_scale(x3d, scaler, verbose=1):
+    """Do scale on the input sequence data. 
+    
+    Args:
+      x3d: ndarray, input sequence data, shape: (n_clips, n_time, n_freq)
+      scaler: scaler object. 
+      verbose: integar, print flag. 
+      
+    Returns:
+      Scaled input sequence data. 
+    """
+    t1 = time.time()
+    (n_clips, n_time, n_freq) = x3d.shape
+    x2d = x3d.reshape((n_clips * n_time, n_freq))
+    x2d_scaled = scaler.transform(x2d)
+    x3d_scaled = x2d_scaled.reshape((n_clips, n_time, n_freq))
+    if verbose == 1:
+        print("Scaling time: %s" % (time.time() - t1,))
+    return x3d_scaled
+
+### Main function
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="")
     subparsers = parser.add_subparsers(dest='mode')
     
-    parser_cl = subparsers.add_parser('extract_features')
-    parser_cl.add_argument('--wav_dir', type=str)
-    parser_cl.add_argument('--out_dir', type=str)
-    parser_cl.add_argument('--recompute', type=bool)
+    parser_ef = subparsers.add_parser('extract_features')
+    parser_ef.add_argument('--wav_dir', type=str)
+    parser_ef.add_argument('--out_dir', type=str)
+    parser_ef.add_argument('--recompute', type=bool)
     
     parser_pf = subparsers.add_parser('pack_features')
     parser_pf.add_argument('--fe_dir', type=str)
