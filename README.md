@@ -13,3 +13,8 @@ http://www.cs.tut.fi/sgn/arg/dcase2017/documents/challenge_technical_reports/DCA
 The data set used in this chanllege is part of Google Audioset.
 
 DCASE 2017 challenge is organized by TUT, CMU and INRIA, sponsored by Google and Audio Analytic. The CVSSP team submitted four systems to the audio tagging sub-task,which took all the top four places on the result table, among the 29 systems submitted by a number of organisations. CVSSP's system is also ranked at the 3rd place in the sound event detection subtask, among 17 systems. The competitors include CMU, New York University, Bosch, USC, TUT, Singapore A*Star, Korean Advanced Institute of Science and Technology, Seoul National University, National Taiwan university, etc.
+
+For downloading the data, please see https://groups.google.com/forum/#!searchin/dcase-discussions/own%7Csort:relevance/dcase-discussions/Lk2dTScX3A8/kvW17tlzAgAJ
+
+Number of testing files: 488
+
