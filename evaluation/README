@@ -1,0 +1,24 @@
+DCASE2017 task4 evaluation & visualization tool. 
+
+python runme.py
+
+(python version: 2.7)
+
+-----------------------------------
+
+(1) Audio tagging. 
+      (a) Create a single text-file (csv format, See data/at_prob_mat.csv.gz as example)
+          Each line has format:
+          "[wav_filename][tab][prob of event 1][tab][prob of event 2][tab]...[prob of event 17]".
+      (b) See runme.py 
+          
+(2) Sound event detection. 
+      (a) Create a single text-file (csv format, See data/sed_prob_mat_list.csv.gz.csv as example)
+          Each line has format:
+          "[wav_filename][tab][prob of event 1 in frame t][tab][prob of event 2 in frame t][tab]...[prob of event 17 in frame t]"
+      (b) (Modify max_len, step_sec based on your frame duration)
+      (c) See runme.py
+
+-----------------------------------
+
+Challenge page: http://www.cs.tut.fi/sgn/arg/dcase2017/challenge/task-large-scale-sound-event-detection
