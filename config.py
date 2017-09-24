@@ -6,6 +6,7 @@ sample_rate = 16000.
 n_window = 1024
 n_overlap = 360      # ensure 240 frames in 10 seconds
 max_len = 240        # sequence max length is 10 s, 240 frames. 
+step_time_in_sec = float(n_window - n_overlap) / sample_rate
 
 # Id of classes
 ids = ['/m/0284vy3', '/m/05x_td', '/m/02mfyn', '/m/02rhddq', '/m/0199g', 
