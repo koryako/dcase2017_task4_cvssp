@@ -16,5 +16,6 @@ DCASE 2017 challenge is organized by TUT, CMU and INRIA, sponsored by Google and
 
 For downloading the data, please see https://groups.google.com/forum/#!searchin/dcase-discussions/own%7Csort:relevance/dcase-discussions/Lk2dTScX3A8/kvW17tlzAgAJ
 
+Number of training files: 51172
 Number of testing files: 488
-
+Number of evaluation files: 1103
