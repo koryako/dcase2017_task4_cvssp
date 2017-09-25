@@ -77,7 +77,7 @@ def extract_features(wav_dir, out_dir, recompute):
         # Skip features already computed
         if recompute or (not os.path.isfile(out_path)):
             print(cnt, out_path)
-            (audio, _) = read_audio(wav_path)
+            (audio, _) = read_audio(wav_path, fs)
             
             # Skip corrupted wavs
             if audio.shape[0] == 0:
@@ -145,7 +145,7 @@ def pack_features_to_hdf5(fe_dir, csv_path, out_path):
             if not os.path.isfile(fe_path):
                 print("File %s is in the csv file but the feature is not extracted!" % fe_path)
             else:
-                na_all.append(bare_na + ".wav")
+                na_all.append(bare_na[1:] + ".wav") # Remove 'Y' in the begining. 
                 x = cPickle.load(open(fe_path, 'rb'))
                 x = pad_trunc_seq(x, max_len)
                 x_all.append(x)
@@ -242,7 +242,7 @@ def load_hdf5_data(hdf5_path, verbose=1):
         
     return x, y, na_list
 
-def calculate_scaler(x3d, verbose=1):
+def calculate_scaler(hdf5_path, out_path):
     """Calculate scaler of input data on each frequency bin. 
     
     Args:
@@ -253,15 +253,14 @@ def calculate_scaler(x3d, verbose=1):
       Scaler object. 
     """
     t1 = time.time()
-    (n_clips, n_time, n_freq) = x3d.shape
+    (x, y, na_list) = load_hdf5_data(hdf5_path, verbose=1)
+    (n_clips, n_time, n_freq) = x.shape
     x2d = x3d.reshape((n_clips * n_time, n_freq))
     scaler = preprocessing.StandardScaler().fit(x2d)
-    if verbose >= 1:
-        print("Calculating scaler time: %s" % (time.time() - t1,))
-    if verbose == 2:
-        print("Mean:", scaler.mean_)
-        print(scaler.scale_)
-    return scaler
+    print("Mean:", scaler.mean_)
+    print(scaler.scale_)
+    print("Calculating scaler time: %s" % (time.time() - t1,))
+    pickle.dump(scaler, open(out_path, 'wb'))
     
 def do_scale(x3d, scaler, verbose=1):
     """Do scale on the input sequence data. 
@@ -297,6 +296,10 @@ if __name__ == '__main__':
     parser_pf.add_argument('--fe_dir', type=str)
     parser_pf.add_argument('--csv_path', type=str)
     parser_pf.add_argument('--out_path', type=str)
+    
+    parser_cs = subparsers.add_parser('calculate_scaler')
+    parser_cs.add_argument('--fe_dir', type=str)
+    parser_cs.add_argument('--out_path', type=str)
 
     args = parser.parse_args()
     
@@ -308,5 +311,8 @@ if __name__ == '__main__':
         pack_features_to_hdf5(fe_dir=args.fe_dir, 
                               csv_path=args.csv_path, 
                               out_path=args.out_path)
+    elif args.mode == 'calculate_scaler':
+        calculate_scaler(hdf5_path=hdf5_path, 
+                         out_path=out_path)
     else:
         raise Exception("Incorrect argument!")
