@@ -164,10 +164,10 @@ def recognize(args, at_bool, sed_bool):
     fusion_at_list = []
     fusion_sed_list = []
     # for epoch in range(19, 81, 10):
-    for epoch in range(50, 51, 1):
+    for epoch in range(20, 30, 1):
         t1 = time.time()
         [model_path] = glob.glob(os.path.join(args.model_dir, 
-            "gatedAct_rationBal44_lr0.001_normalization_at_cnnRNN_64mel_240fr.%02d-0.*.hdf5" % epoch))
+            "*.%02d-0.*.hdf5" % epoch))
         model = load_model(model_path)
         
         # Audio tagging
