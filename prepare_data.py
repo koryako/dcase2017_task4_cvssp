@@ -246,34 +246,35 @@ def calculate_scaler(hdf5_path, out_path):
     """Calculate scaler of input data on each frequency bin. 
     
     Args:
-      x3d: ndarray, input sequence data, shape: (n_clips, n_time, n_freq)
-      verbose: integar, print flag. 
+      hdf5_path: string, path of packed hdf5 features file. 
+      out_path: string, path to write out the calculated scaler. 
       
     Returns:
-      Scaler object. 
+      None. 
     """
     t1 = time.time()
     (x, y, na_list) = load_hdf5_data(hdf5_path, verbose=1)
     (n_clips, n_time, n_freq) = x.shape
-    x2d = x3d.reshape((n_clips * n_time, n_freq))
+    x2d = x.reshape((n_clips * n_time, n_freq))
     scaler = preprocessing.StandardScaler().fit(x2d)
-    print("Mean:", scaler.mean_)
-    print(scaler.scale_)
+    print("Mean: %s" % (scaler.mean_,))
+    print("Std: %s" % (scaler.scale_,))
     print("Calculating scaler time: %s" % (time.time() - t1,))
     pickle.dump(scaler, open(out_path, 'wb'))
     
-def do_scale(x3d, scaler, verbose=1):
+def do_scale(x3d, scaler_path, verbose=1):
     """Do scale on the input sequence data. 
     
     Args:
       x3d: ndarray, input sequence data, shape: (n_clips, n_time, n_freq)
-      scaler: scaler object. 
+      scaler_path: string, path of pre-calculated scaler. 
       verbose: integar, print flag. 
       
     Returns:
       Scaled input sequence data. 
     """
     t1 = time.time()
+    scaler = pickle.load(open(scaler_path, 'rb'))
     (n_clips, n_time, n_freq) = x3d.shape
     x2d = x3d.reshape((n_clips * n_time, n_freq))
     x2d_scaled = scaler.transform(x2d)
@@ -298,7 +299,7 @@ if __name__ == '__main__':
     parser_pf.add_argument('--out_path', type=str)
     
     parser_cs = subparsers.add_parser('calculate_scaler')
-    parser_cs.add_argument('--fe_dir', type=str)
+    parser_cs.add_argument('--hdf5_path', type=str)
     parser_cs.add_argument('--out_path', type=str)
 
     args = parser.parse_args()
@@ -312,7 +313,7 @@ if __name__ == '__main__':
                               csv_path=args.csv_path, 
                               out_path=args.out_path)
     elif args.mode == 'calculate_scaler':
-        calculate_scaler(hdf5_path=hdf5_path, 
-                         out_path=out_path)
+        calculate_scaler(hdf5_path=args.hdf5_path, 
+                         out_path=args.out_path)
     else:
         raise Exception("Incorrect argument!")
