@@ -18,3 +18,21 @@ python prepare_data.py pack_features --fe_dir=$WORKSPACE"/features/logmel/evalua
 
 # Calculate scaler
 python prepare_data.py calculate_scaler --hdf5_path=$WORKSPACE"/packed_features/logmel/training.h5" --out_path=$WORKSPACE"/scalers/logmel/training.scaler"
+
+# Train AT
+THEANO_FLAGS=mode=FAST_RUN,device=gpu,floatX=float32 python main_crnn_at.py train --tr_hdf5_path=$WORKSPACE"/packed_features/logmel/training.h5" --te_hdf5_path=$WORKSPACE"/packed_features/logmel/testing.h5" --scaler_path=$WORKSPACE"/scalers/logmel/training.scaler" --out_model_dir=$WORKSPACE"/models/crnn_at"
+
+# Recognize AT
+THEANO_FLAGS=mode=FAST_RUN,device=gpu,floatX=float32 python main_crnn_at.py recognize --te_hdf5_path=$WORKSPACE"/packed_features/logmel/testing.h5" --scaler_path=$WORKSPACE"/scalers/logmel/training.scaler" --model_dir=$WORKSPACE"/models/crnn_at" --out_dir=$WORKSPACE"/preds/crnn_at"
+
+# Get stat of AT
+THEANO_FLAGS=mode=FAST_RUN,device=gpu,floatX=float32 python main_crnn_at.py get_stat --pred_dir=$WORKSPACE"/preds/crnn_at" --stat_dir=$WORKSPACE"/stats/crnn_at" --submission_dir=$WORKSPACE"/submissions/crnn_at"
+
+# Train SED
+THEANO_FLAGS=mode=FAST_RUN,device=gpu,floatX=float32 python main_crnn_sed.py train --tr_hdf5_path=$WORKSPACE"/packed_features/logmel/training.h5" --te_hdf5_path=$WORKSPACE"/packed_features/logmel/testing.h5" --scaler_path=$WORKSPACE"/scalers/logmel/training.scaler" --out_model_dir=$WORKSPACE"/models/crnn_sed"
+
+# Recognize SED
+THEANO_FLAGS=mode=FAST_RUN,device=gpu,floatX=float32 python main_crnn_at.py recognize --te_hdf5_path=$WORKSPACE"/packed_features/logmel/testing.h5" --scaler_path=$WORKSPACE"/scalers/logmel/training.scaler" --model_dir=$WORKSPACE"/models/crnn_sed" --out_dir=$WORKSPACE"/preds/crnn_sed"
+
+# Get stat of SED
+THEANO_FLAGS=mode=FAST_RUN,device=gpu,floatX=float32 python main_crnn_at.py get_stat --pred_dir=$WORKSPACE"/preds/crnn_sed" --stat_dir=$WORKSPACE"/stats/crnn_sed" --submission_dir=$WORKSPACE"/submissions/crnn_sed"
